@@ -13,7 +13,8 @@ def request_system_status(connection):
 
 # 創建與飛行器的MAVLink連接，這裡以串口連接為例
 # 如果是模擬器，可以使用 "udp:127.0.0.1:14550" 進行連接
-connection = mavutil.mavlink_connection("/dev/ttyACM1", baud=57600)
+#connection = mavutil.mavlink_connection("/dev/ttyACM1", baud=57600)
+connection = mavutil.mavlink_connection("udp:127.0.0.1:14550")
 
 # 等待接收到飛行器的心跳訊息
 print("等待飛行器連接...")
@@ -30,7 +31,7 @@ while True:
 while True:
     # 發送請求，詢問飛行器的系統狀態
     request_system_status(connection)
-    
+
     # 接收MAVLink訊息
     msg = connection.recv_match(blocking=True)
 
