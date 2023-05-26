@@ -1,6 +1,10 @@
 import time
 from pymavlink import mavutil
 
+def get_current_location(connection):
+    msg = connection.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
+    return msg.lat / 1E7, msg.lon / 1E7, msg.alt / 1E3  # returns lat, lon, alt
+
 def arm_and_takeoff(connection, target_altitude):
     print("起飛中...")
 
@@ -29,29 +33,19 @@ def arm_and_takeoff(connection, target_altitude):
         0, 0, 0, 0, 0, 0,
         target_altitude
     )
+
 def move_relative(connection, x, y, z, wait_time):
     print(f"相對移動：x={x}, y={y}, z={z}")
+    lat, lon, alt = get_current_location(connection)
     connection.mav.command_long_send(
         connection.target_system,
         connection.target_component,
         mavutil.mavlink.MAV_CMD_DO_REPOSITION,
         0,
         0, 0, 0, 0,
-        connection.location().lat + x,
-        connection.location().lon + y,
-        connection.location().alt + z
-    )
-    time.sleep(wait_time)
-
-
-def error_move_relative(connection, x, y, z, wait_time):
-    print(f"相對移動：x={x}, y={y}, z={z}")
-    connection.mav.command_long_send(
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_CMD_CONDITION_YAW,
-        0,
-        x, y, z, 0, 0, 0, 0
+        lat + x,
+        lon + y,
+        alt + z
     )
     time.sleep(wait_time)
 
@@ -87,4 +81,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
