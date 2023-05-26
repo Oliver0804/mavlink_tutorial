@@ -63,7 +63,7 @@ def land(connection):
         0, 0, 0, 0, 0, 0, 0
     )
 
-def circle(connection):
+def change_mode_circle(connection):
     print("繞圈！")
     connection.mav.command_long_send(
         connection.target_system,
