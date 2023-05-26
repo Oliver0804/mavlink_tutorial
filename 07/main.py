@@ -1,3 +1,13 @@
+from pymavlink import mavutil
+
+# 開始一個監聽UDP埠的連線
+the_connection = mavutil.mavlink_connection('udpin:localhost:14550')
+
+# 等待第一個心跳訊息
+# 這會設定鏈路的遠端系統及元件的ID
+the_connection.wait_heartbeat()
+
+
 # Description: This is a sample code for connecting to a drone and sending commands to it.
 # docker build --tag ardupilot github.com/radarku/ardupilot-sitl-docker
 # docker run -it --rm -p 5760:5760 ardupilot
@@ -8,15 +18,6 @@
 
 
 
-from pymavlink import mavutil
-
-# 開始一個監聽UDP埠的連線
-the_connection = mavutil.mavlink_connection('udpin:localhost:14550')
-
-# 等待第一個心跳訊息
-
-# 這會設定鏈路的遠端系統及元件的ID
-the_connection.wait_heartbeat()
 
 # 向飛機發送解鎖指令
 the_connection.mav.command_long_send(the_connection.target_system, the_connection.target_component,
