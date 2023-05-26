@@ -42,7 +42,7 @@ def arm_and_takeoff(aTargetAltitude):
         time.sleep(1)    
 
 #RTL函數需要一個連接，然後就是讓飛機回到起飛點
-def RTL(connection):
+def change_mode_rtl(connection):
     print("返航！")
     connection.mav.command_long_send(
         connection.target_system,
@@ -53,7 +53,7 @@ def RTL(connection):
     )
 
 #land函數需要一個連接，然後就是讓飛機降落
-def land(connection):
+def change_mode_land(connection):
     print("降落！")
     connection.mav.command_long_send(
         connection.target_system,
@@ -138,14 +138,15 @@ if __name__ == "__main__":
                 print("右移")
                 move_relative(connection, 0, 10, 0)
             elif input_char == "q":
-                print("返航")
-                RTL(connection)
+                print("結束")
+                #離開程序
+                break
             elif input_char == "e":
                 print("降落")
-                land(connection)
+                change_mode_land(connection)
             elif input_char == "r":
                 print("繞圈")
-                circle(connection)
+                change_mode_circle(connection)
             elif input_char == "z":
                 print("change mode to GUIDED")
                 change_mode_guided(connection)
@@ -154,7 +155,7 @@ if __name__ == "__main__":
                 change_mode_auto(connection)
             elif input_char == "c":
                 print("change mode to RTL")
-                RTL(connection)
+                change_mode_rtl(connection)
             else:
                 print("無效指令")
         except KeyboardInterrupt:
