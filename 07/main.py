@@ -1,163 +1,78 @@
-#引入pymavlink庫，並且引入mavutil
-#這個程式碼主要是用來控制飛機的起飛、降落、相對移動
-#首先我們要先建立一個連接，這個連接是用來跟飛機通訊的
-#我們可以透過mavutil.mavlink_connection來建立連接
-#這個函數需要一個參數，就是我們要連接的飛機的位址
-#這裡我們使用
-import time
+# Description: This is a sample code for connecting to a drone and sending commands to it.
+# docker build --tag ardupilot github.com/radarku/ardupilot-sitl-docker
+# docker run -it --rm -p 5760:5760 ardupilot
+
+# 運行mavproxy
+# mavproxy.py --master=tcp:127.0.0.1:5760 --out=udp:127.0.0.1:14550
+
+
+
+
 from pymavlink import mavutil
 
-#arm_and_takeoff函數需要一個連接和一個參數，這個參數是用來設定飛機的起飛高度
-def arm_and_takeoff(aTargetAltitude):
-    print("準備起飛！")
-    while not vehicle.is_armable:
-        print("等待飛行器初始化...")
-        time.sleep(1)
+# 開始一個監聽UDP埠的連線
+the_connection = mavutil.mavlink_connection('udpin:localhost:14550')
 
-    # 這裡我們先設定飛機的模式為GUIDED模式
-    vehicle.mode = VehicleMode("GUIDED")
+# 等待第一個心跳訊息
 
-    # 等待模式設定完成
-    while vehicle.mode != "GUIDED":
-        print("等待模式設定完成...")
-        time.sleep(1)
+# 這會設定鏈路的遠端系統及元件的ID
+the_connection.wait_heartbeat()
 
-    # 解除武裝
-    vehicle.armed = True
+# 向飛機發送解鎖指令
+the_connection.mav.command_long_send(the_connection.target_system, the_connection.target_component,
+                                     mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
 
-    # 等待解除武裝完成
-    while not vehicle.armed:
-        print("等待解除武裝完成...")
-        time.sleep(1)
+# 等待指令確認訊息
+print("等待指令確認訊息")
+msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
+print(msg)
 
-    print("起飛！")
-    vehicle.simple_takeoff(aTargetAltitude)
+print("從系統接收到的心跳訊息 (系統 %u 元件 %u)" %
+      (the_connection.target_system, the_connection.target_component))
 
-    # 當飛機的高度大於目標高度的95%時，就跳出迴圈
-    while True:
-        print("目前高度：", vehicle.location.global_relative_frame.alt)
-        if vehicle.location.global_relative_frame.alt >= aTargetAltitude * 0.95:
-            print("已達到目標高度")
-            break
-        time.sleep(1)    
+# 向飛機再次發送解鎖指令
+print("解鎖")
+the_connection.mav.command_long_send(the_connection.target_system, the_connection.target_component,
+                                     mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
 
-#RTL函數需要一個連接，然後就是讓飛機回到起飛點
-def change_mode_rtl(connection):
-    print("返航！")
-    connection.mav.command_long_send(
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_CMD_NAV_RETURN_TO_LAUNCH,
-        0,
-        0, 0, 0, 0, 0, 0, 0
-    )
+msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
+print(msg)
 
-#land函數需要一個連接，然後就是讓飛機降落
-def change_mode_land(connection):
-    print("降落！")
-    connection.mav.command_long_send(
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_CMD_NAV_LAND,
-        0,
-        0, 0, 0, 0, 0, 0, 0
-    )
+# 向飛機發送起飛指令，目標高度為40
+print("起飛")
+the_connection.mav.command_long_send(the_connection.target_system, the_connection.target_component,
+                                     mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 40)
+msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
+print(msg)
 
-def change_mode_circle(connection):
-    print("繞圈！")
-    connection.mav.command_long_send(
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_CMD_NAV_LOITER_UNLIM,
-        0,
-        0, 0, 0, 0, 0, 0, 0
-    )
+print("從系統接收到的心跳訊息 (系統 %u 元件 %u)" %
+      (the_connection.target_system, the_connection.target_component))
 
-#change mode to GUIDED
-def change_mode_guided(connection):
-    print("change mode to GUIDED")
-    connection.mav.command_long_send(
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_CMD_DO_SET_MODE,
-        0,
-        0, 0, 0, 0, 0, 0, 0
-    )
+# 向飛機發送設定位置的指令
+#the_connection.mav.send(mavutil.mavlink.MAVLink_set_position_target_global_int_message(10, the_connection.target_system,
+#                        the_connection.target_component, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, int(0b110111111000), int(-35.3629849 * 10 ** 7), int(149.1649185 * 10 ** 7), 10, 0, 0, 0, 0, 0, 0, 1.57, 0.5))
 
-#change mode to AUTO
-def change_mode_auto(connection):
-    print("change mode to AUTO")
-    connection.mav.command_long_send(
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_CMD_DO_SET_MODE,
-        0,
-        1, 0, 0, 0, 0, 0, 0
-    )
-#輸入前後左右距離與高度 對應發送mavlink指令
-def move_relative(connection, distance_x, distance_y, distance_z):
-    print("移動相對距離")
-    connection.mav.set_position_target_local_ned_send(
-        0,
-        connection.target_system,
-        connection.target_component,
-        mavutil.mavlink.MAV_FRAME_LOCAL_NED,
-        0b0000111111000111,
-        0, 0, 0,
-        distance_x, distance_y, distance_z,
-        0, 0, 0,
-        0, 0
-    )
+while 0:
+    msg = the_connection.recv_match(type='SERVO_OUTPUT_RAW', blocking=True)
+    print("PWM Outputs: ", msg.servo1_raw, msg.servo2_raw, msg.servo3_raw, msg.servo4_raw, msg.servo5_raw, msg.servo6_raw, msg.servo7_raw, msg.servo8_raw)
 
 
 
+# 秀出高度
+while True:
+    msg = the_connection.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
+    if msg:
+        print("Current altitude: %s" % msg.relative_alt)
 
-#主程序入口
-#這裡我們先建立一個連接，然後呼叫arm_and_takeoff函數，起飛高度是10公尺
-#起飛之後，我們再呼叫move_relative函數，讓飛機向前移動10公尺，然後等待5秒
-#接著我們再呼叫move_relative函數，讓飛機向後移動10公尺，然後等待5秒
-#最後我們呼叫disarm函數，讓飛機降落並且解除武裝
 
-if __name__ == "__main__":
-    connection = mavutil.mavlink_connection("udp:127.0.0.1:14550")
-    arm_and_takeoff(10)
-    # 使用方向鍵控制飛機移動
-    while True:
-        try:
-            input_char = input("請輸入指令：")
-            if input_char == "w":
-                print("前進")
-                move_relative(connection, 10, 0, 0)
-            elif input_char == "s":
-                print("後退")
-                move_relative(connection, -10, 0, 0)
-            elif input_char == "a":
-                print("左移")
-                move_relative(connection, 0, -10, 0)
-            elif input_char == "d":
-                print("右移")
-                move_relative(connection, 0, 10, 0)
-            elif input_char == "q":
-                print("結束")
-                #離開程序
-                break
-            elif input_char == "e":
-                print("降落")
-                change_mode_land(connection)
-            elif input_char == "r":
-                print("繞圈")
-                change_mode_circle(connection)
-            elif input_char == "z":
-                print("change mode to GUIDED")
-                change_mode_guided(connection)
-            elif input_char == "x":
-                print("change mode to AUTO")
-                change_mode_auto(connection)
-            elif input_char == "c":
-                print("change mode to RTL")
-                change_mode_rtl(connection)
-            else:
-                print("無效指令")
-        except KeyboardInterrupt:
-            print("程式結束")
-            break
+# 持續接收飛機的位置訊息
+while True:
+    msg = the_connection.recv_match(
+        type='LOCAL_POSITION_NED', blocking=True)
+    print(msg)
+
+# IMU
+while True:
+    msg = the_connection.recv_match(
+        type='RAW_IMU', blocking=True)
+    print(msg)
