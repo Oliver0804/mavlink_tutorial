@@ -1,7 +1,8 @@
 
 # Description: This is a sample code for connecting to a drone and sending commands to it.
 # docker build --tag ardupilot github.com/radarku/ardupilot-sitl-docker
-# docker run -it --rm -p 5760:5760 ardupilot
+## docker run -it --rm -p 5760:5760 ardupilot
+## 或是於docker資料夾中運行docker-compose up
 
 # 運行mavproxy
 # mavproxy.py --master=tcp:127.0.0.1:5760 --out=udp:127.0.0.1:14550
