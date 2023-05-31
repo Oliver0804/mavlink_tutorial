@@ -37,11 +37,17 @@ requirements.txt存放於本github目錄中
  ```
 
  --master 指向設備
+ 
  --out 用於輸出 可以多組,用於地面站或是其他程序接入使用
+ 
  --map 打開地圖
+ 
  --console 打開圖形界面
+ 
+圖形化介面
 
 ![](https://github.com/Oliver0804/mavlink_tutorial/blob/main/07/pic/%E6%88%AA%E5%9C%96%202023-05-31%20%E4%B8%8B%E5%8D%881.23.34.png)
+
 ![](https://github.com/Oliver0804/mavlink_tutorial/blob/main/07/pic/%E6%88%AA%E5%9C%96%202023-05-31%20%E4%B8%8B%E5%8D%881.23.56.png)
 
 
