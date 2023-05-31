@@ -92,12 +92,51 @@ the_connection.mav.command_long_send(the_connection.target_system, the_connectio
 msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
 print(msg)
 
+time.sleep(10)
 print("從系統接收到的心跳訊息 (系統 %u 元件 %u)" %
       (the_connection.target_system, the_connection.target_component))
 
-# 向飛機發送設定位置的指令
-#the_connection.mav.send(mavutil.mavlink.MAVLink_set_position_target_global_int_message(10, the_connection.target_system,
-#                        the_connection.target_component, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, int(0b110111111000), int(-35.3629849 * 10 ** 7), int(149.1649185 * 10 ** 7), 10, 0, 0, 0, 0, 0, 0, 1.57, 0.5))
+
+
+print("向前移動")
+# 設定目標位置
+x, y, z = 10, 10, 0  # 10m forward in x direction, 0 in y, z direction
+
+# 設定為GUIDED模式
+the_connection.mav.command_long_send(
+    the_connection.target_system,
+    the_connection.target_component,
+    mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+    0,  # confirmation
+    1,  # MAV_MODE_FLAG_CUSTOM_MODE_ENABLED
+    4,  # GUIDED mode
+    0, 0, 0, 0, 0  # unused parameters
+)
+
+msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
+print(msg)
+
+# 發送位置設定指令
+the_connection.mav.set_position_target_local_ned_send(
+    0,  # time_boot_ms (not used)
+    the_connection.target_system,  # target system
+    the_connection.target_component,  # target component
+    mavutil.mavlink.MAV_FRAME_LOCAL_OFFSET_NED,  # frame
+    0b0000111111111000,  # type_mask (only positions enabled)
+    x, y, z,  # x, y, z positions
+    0, 0, 0,  # x, y, z velocity in m/s (not used)
+    0, 0, 0,  # x, y, z acceleration (not used)
+    0, 0  # yaw, yaw_rate (not used)
+)
+
+msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
+print(msg)
+
+
+
+
+
+
 
 while True:
     # 接收SERVO_OUTPUT_RAW訊息，並印出PWM輸出值
@@ -119,4 +158,4 @@ while True:
     msg = the_connection.recv_match(type='RAW_IMU', blocking=True)
     if msg:
         print("IMU訊息：", msg)
-
+    time.sleep(1)
