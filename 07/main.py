@@ -1,9 +1,21 @@
+
 # Description: This is a sample code for connecting to a drone and sending commands to it.
 # docker build --tag ardupilot github.com/radarku/ardupilot-sitl-docker
-# docker run -it --rm -p 5760:5760 ardupilot
+## docker run -it --rm -p 5760:5760 ardupilot
+## 或是於docker資料夾中運行docker-compose up
 
 # 運行mavproxy
 # mavproxy.py --master=tcp:127.0.0.1:5760 --out=udp:127.0.0.1:14550
+## module console
+## MAVProxy -> Show map and Show HUD
+#setspeed N
+#如果在自動飛行模式下，將車輛目標速度設置為Nm/s。
+
+#takeoff ALTITUDE_IN_METERS
+#向車輛發送自動起飛命令。它將認為起飛在 ALTITUDE_IN_METERSm（相對）完成。
+
+#velocity X Y Z
+#在局部東北向下 (x, y, z) 坐標系中設置所需的車輛速度。所有速度以 m/s 為單位。
 
 
 
