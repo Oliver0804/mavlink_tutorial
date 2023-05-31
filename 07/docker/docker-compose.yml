@@ -1,0 +1,8 @@
+version: '3'
+services:
+  ardupilot-sitl:
+    build: 
+      context: .  # 指定Dockerfile所在的目錄，這裡假設Dockerfile在當前目錄下
+    tty: true
+    ports:
+      - 5760:5760
