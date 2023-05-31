@@ -64,27 +64,24 @@ print("從系統接收到的心跳訊息 (系統 %u 元件 %u)" %
 #the_connection.mav.send(mavutil.mavlink.MAVLink_set_position_target_global_int_message(10, the_connection.target_system,
 #                        the_connection.target_component, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, int(0b110111111000), int(-35.3629849 * 10 ** 7), int(149.1649185 * 10 ** 7), 10, 0, 0, 0, 0, 0, 0, 1.57, 0.5))
 
-while 0:
-    msg = the_connection.recv_match(type='SERVO_OUTPUT_RAW', blocking=True)
-    print("PWM Outputs: ", msg.servo1_raw, msg.servo2_raw, msg.servo3_raw, msg.servo4_raw, msg.servo5_raw, msg.servo6_raw, msg.servo7_raw, msg.servo8_raw)
-
-
-
-# 秀出高度
 while True:
+    # 接收SERVO_OUTPUT_RAW訊息，並印出PWM輸出值
+    msg = the_connection.recv_match(type='SERVO_OUTPUT_RAW', blocking=True)
+    if msg:
+        print("PWM輸出：", msg.servo1_raw, msg.servo2_raw, msg.servo3_raw, msg.servo4_raw, msg.servo5_raw, msg.servo6_raw, msg.servo7_raw, msg.servo8_raw)
+
+    # 接收GLOBAL_POSITION_INT訊息，並印出目前的高度
     msg = the_connection.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
     if msg:
-        print("Current altitude: %s" % msg.relative_alt)
+        print("目前的高度： %s" % msg.relative_alt)
 
+    # 接收LOCAL_POSITION_NED訊息，並印出飛機的位置訊息
+    msg = the_connection.recv_match(type='LOCAL_POSITION_NED', blocking=True)
+    if msg:
+        print("飛機的位置訊息：", msg)
 
-# 持續接收飛機的位置訊息
-while True:
-    msg = the_connection.recv_match(
-        type='LOCAL_POSITION_NED', blocking=True)
-    print(msg)
+    # 接收RAW_IMU訊息，並印出IMU訊息
+    msg = the_connection.recv_match(type='RAW_IMU', blocking=True)
+    if msg:
+        print("IMU訊息：", msg)
 
-# IMU
-while True:
-    msg = the_connection.recv_match(
-        type='RAW_IMU', blocking=True)
-    print(msg)
