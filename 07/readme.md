@@ -1,13 +1,13 @@
 # 今天針對MAVproxy進行展示
-##SITL部屬
+## SITL佈署
  07資料夾中有兩個檔案
  Docker 資料夾中為部署SITL的文件
- 使用 docker-compose up 佈署
- 請使用apt先完成docker ,docker-compose 安裝
+ 使用 docker-compose up 佈署，如果以完成安裝可直接進行第二步
+ 1. 請使用apt先完成docker ,docker-compose 安裝
  ```
  apt install -y docker docker-compose
  ```
-運行
+2. 運行
 ```
  docker-compose up 
 ```
@@ -15,10 +15,11 @@
 ## 安裝與使用mavproxy
  使用requirements.txt進行安裝pip
  ```
- pip install -r requirements.txt 
+ 1. pip install -r requirements.txt 
  ```
+requirements.txt存放於本github目錄中
 
- 運行mavproxy.py
+ 2. 運行mavproxy.py
  ```
  mavproxy.py --master=tcp:127.0.0.1:5760 \
  --out=udp:127.0.0.1:14550 \
@@ -36,8 +37,31 @@
 ### 終端機開始有打印資訊了
 
 
-##mavproxy 命令操作
-1. mode [list]
-2. arm 
-3. module [load/list]
+## mavproxy 命令操作
+### 命令介紹
+1. mode [mode/null]
+Available modes:  dict_keys(['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'LOITER', 'RTL', 'CIRCLE', 'POSITION', 'LAND', 'OF_LOITER', 'DRIFT', 'SPORT', 'FLIP', 'AUTOTUNE', 'POSHOLD', 'BRAKE', 'THROW', 'AVOID_ADSB', 'GUIDED_NOGPS', 'SMART_RTL', 'FLOWHOLD', 'FOLLOW', 'ZIGZAG', 'SYSTEMID', 'AUTOROTATE', 'AUTO_RTL'])
+注意 不同的設備提供的mode有所不同，在不同的設備起飛流程也有差別
+2. arm [<check|uncheck|list|throttle|safetyon|safetyoff|safetystatus|bits|prearms>]
+3. module [load <module_name>/list]
 4. velocity [X Y Z]
+
+### 命令介紹
+這邊主要使用MAVproxy中所提供令命進行，如果要使用python/C++SDK等程序控制也沒問題。可同時主要是mavproxy.py運行時候有待<--out=udp:127.0.0.1:14550> 參數
+#### 起飛程序
+1. mode guided
+2. arm throttle
+3. takeoff 20
+#### 移動相對位置
+GUIDED> velocity
+GUIDED> Usage: velocity x y z (m/s)
+1. velocity 10 0 0 //前進10m
+2. velocity 10 10 0 //前進10m向右10m 同時
+#### 繞圈
+1. rc 3 1500
+2. mode circle
+這邊如果沒將油門rc ch-3 推到1500 在旋轉過程中會持續下降
+
+#### RTL
+1. mode rtl
+如果高度低於15m，設備會先拉高到預設高度後，才執行RTL
