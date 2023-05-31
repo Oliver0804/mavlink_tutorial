@@ -43,7 +43,8 @@ print("從系統接收到的心跳訊息 (系統 %u 元件 %u)" %
       (the_connection.target_system, the_connection.target_component))
 
 # 向飛機發送改變模式的指令，設定模式為 "GUIDED"
-#透過發送一個包含 MAV_CMD_DO_SET_MODE 指令的 COMMAND_LONG 消息來實現的​1​。
+#透過發送一個包含 MAV_CMD_DO_SET_MODE 指令的 COMMAND_LONG 消息來實現的​。
+#https://ardupilot.org/dev/docs/mavlink-get-set-flightmode.html
 #這裡是每個參數的詳細解釋：
 #target_system: 無人機的系統ID。如果對象是飛行控制器，則此值可以是0。
 #target_component: 無人機的組件ID。如果對象是飛行控制器，則此值可以是0。
