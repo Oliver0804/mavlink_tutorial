@@ -84,6 +84,12 @@ Available modes:  dict_keys(['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 
 | Sport | s | s | - | Alt-hold，但當搖桿在中心時保持俯仰和滾動 |
 | Stabilize | - | + | - | 自我平衡滾動和俯仰軸 |
 
+"S" 代表 "Simple"，表示該飛行模式具有某種形式的簡單控制。
+
+"A" 代表 "Automatic"，表示該飛行模式具有某種形式的自動控制。
+
+"Y" 代表 "Yes"，表示該飛行模式需要位置感測器（例如GPS）。
+
 注意 不同的設備提供的mode有所不同，在不同的設備起飛流程也有差別
 
 2. arm [<check|uncheck|list|throttle|safetyon|safetyoff|safetystatus|bits|prearms>]
