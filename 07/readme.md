@@ -60,6 +60,29 @@ requirements.txt存放於本github目錄中
 1. mode [mode/null]
 
 Available modes:  dict_keys(['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'LOITER', 'RTL', 'CIRCLE', 'POSITION', 'LAND', 'OF_LOITER', 'DRIFT', 'SPORT', 'FLIP', 'AUTOTUNE', 'POSHOLD', 'BRAKE', 'THROW', 'AVOID_ADSB', 'GUIDED_NOGPS', 'SMART_RTL', 'FLOWHOLD', 'FOLLOW', 'ZIGZAG', 'SYSTEMID', 'AUTOROTATE', 'AUTO_RTL'])
+| 飛行模式 | 高度控制 | 位置控制 | 位置感測器 | 總結 |
+|----------|----------|----------|----------|------|
+| Acro | - | - | - | 保持態度，不自我平衡 |
+| Airmode | - | -/+ | - | 實際上不是一種模式，而是一種特性 |
+| Alt Hold | s | + | - | 保持高度並自我平衡滾動和俯仰 |
+| Auto | A | A | Y | 執行預定的任務 |
+| AutoTune | s | A | Y | 自動的俯仰和橫滾程序，以改善控制迴圈 |
+| Brake | A | A | Y | 使無人機立即停止 |
+| Circle | s | A | Y | 自動繞著前方的點旋轉 |
+| Drift | - | + | Y | 類似於穩定模式，但與飛機一樣協調偏航和滾動 |
+| Flip | A | A | - | 升高並完成自動翻轉 |
+| FlowHold | s | A | - | 使用光流進行位置控制 |
+| Follow | s | A | Y | 跟隨另一架無人機 |
+| Guided | A | A | Y | 導航到由地面站指定的單個點 |
+| Heli_Autorotate | A | A | Y | 用於傳統直升機的緊急情況。僅限直升機。目前只有SITL。 |
+| Land | A | s | (Y) | 將高度降至地面水平，嘗試直接下降 |
+| Loiter | s | s | Y | 保持高度和位置，使用GPS進行移動 |
+| PosHold | s | + | Y | 類似於盤旋，但當搖桿不在中心時，手動滾動和俯仰 |
+| RTL | A | A | Y | 返回到起飛位置，可能還包括著陸 |
+| Simple/Super Simple | - | - | Y | 添加到飛行模式的插件，使用駕駛員視角而不是偏航方向 |
+| SmartRTL | A | A | Y | RTL，但追蹤路徑返回 |
+| Sport | s | s | - | Alt-hold，但當搖桿在中心時保持俯仰和滾動 |
+| Stabilize | - | + | - | 自我平衡滾動和俯仰軸 |
 
 注意 不同的設備提供的mode有所不同，在不同的設備起飛流程也有差別
 
