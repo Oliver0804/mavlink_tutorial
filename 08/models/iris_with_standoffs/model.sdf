@@ -203,7 +203,7 @@
     </link>
     
 
-    <joint name='cam_joint' type='revolute'>
+    <joint name='cam_joint' type='fixed'>
           <child>camera_link</child>
           <parent>base_link</parent>
         </joint>
