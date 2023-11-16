@@ -1,11 +1,76 @@
 from pymavlink import mavutil
 import time
 import math
+import json
+import socket
+
+
 
 # Establish a connection with the aircraft
-master = mavutil.mavlink_connection('udp:127.0.0.1:14551')
+#master = mavutil.mavlink_connection('udp:127.0.0.1:14551')
 # Establish a connection with the Rover ground station
-rover = mavutil.mavlink_connection('udp:127.0.0.1:14552')
+#rover = mavutil.mavlink_connection('udp:127.0.0.1:14552')
+
+
+from pymavlink import mavutil
+import json
+import socket
+
+# Function to create a mavlink connection based on the type
+def create_connection(conn_params):
+    if conn_params['type'] == 'udp':
+        conn_string = f"udp:{conn_params['address']}:{conn_params['port']}"
+    elif conn_params['type'] == 'serial':
+        conn_string = f"{conn_params['address']}:{conn_params['baudrate']}"
+    else:
+        raise ValueError(f"Unsupported connection type: {conn_params['type']}")
+
+    try:
+        return mavutil.mavlink_connection(conn_string)
+    except socket.gaierror as e:
+        print(f"Address resolution error for {conn_params['address']}: {e}")
+        raise
+    except socket.error as e:
+        if e.errno == socket.errno.EACCES:
+            print(f"Insufficient permissions to bind to port {conn_params['port']}.")
+        elif e.errno == socket.errno.EADDRINUSE:
+            print(f"Port {conn_params['port']} is already in use.")
+        else:
+            print(f"Socket error: {e}")
+        raise
+
+# Load connection parameters from a JSON file
+with open('config.json', 'r') as f:
+    params = json.load(f)
+
+# Initialize the connections
+master = None
+rover = None
+
+try:
+    master = create_connection(params['master'])
+    rover = create_connection(params['rover'])
+except Exception as e:
+    print(f"Failed to establish connection: {e}")
+    exit(1)  # Exit if we cannot establish a connection
+
+# Ensure that both master and rover are connected before proceeding
+if master is None or rover is None:
+    print("One or more connections could not be established. Exiting.")
+    exit(1)
+
+# The rest of your code for the MAVLink protocol...
+
+
+    
+# Request the GPS_RAW_INT message stream from the rover at a higher rate (e.g., 5Hz)
+rover.mav.request_data_stream_send(rover.target_system, rover.target_component,
+                                   mavutil.mavlink.MAV_DATA_STREAM_POSITION, 5, 1)
+
+
+
+
+
 
 # (If needed) Take off and switch to FOLLOW mode
 # Uncomment the following lines if required:
@@ -31,13 +96,23 @@ radius = 5 # 大约等于100m
 angle = 0  # 初始化角度
 
 
+master.mav.param_set_send(
+    master.target_system, 
+    master.target_component, 
+    b'FOLL_YAW_BEHAVE', 
+    0,
+    mavutil.mavlink.MAV_PARAM_TYPE_INT8
+)
+
+
+
 while True:
 
     # Fetch the location of the rover to serve as the target location for the aircraft
     rover_location = rover.location()
     target_lat = rover_location.lat
     target_lon = rover_location.lng
-    
+
     #for testing
     target_lat = initial_lat + radius * math.sin(math.radians(angle)) / 111319.9  # 111319.9 是地球上每度纬度的大约距离（以米为单位）
     target_lon = initial_lon + radius * math.cos(math.radians(angle)) / 111319.9
@@ -46,22 +121,27 @@ while True:
         angle = 0  # 重置角度
 
     
-    # Fetch raw GPS data
-    gps_data = rover.recv_match(type='GPS_RAW_INT', blocking=True, timeout=5)
-    # Check if the GPS data is available
-    if gps_data:
-        fix_type = gps_data.fix_type
 
+    gps_data = rover.recv_match(type='GPS_RAW_INT', blocking=True, timeout=10)
+    
+    if gps_data:
+        print(gps_data)
+        fix_type = gps_data.fix_type
         if fix_type == 3:
             print("3D Fix")
-        elif fix_type == 5:
-            print("RTK Float")
         elif fix_type == 6:
             print("RTK Fixed")
         else:
             print(f"Other GPS Fix Type: {fix_type}")
     else:
-        print("No GPS data received.")
+        status_text = rover.recv_match(type='STATUS_TEXT', blocking=True, timeout=10)
+        if status_text:
+            if "RTK" in status_text.text:
+                print("RTK status detected from STATUS_TEXT!")
+            elif "3D Fix" in status_text.text:
+                print("3D Fix status detected from STATUS_TEXT!")
+        else:
+            print("No GPS data or status received.")
 
     time_boot_ms = int(time.time() * 1000) % 4294967296
     
