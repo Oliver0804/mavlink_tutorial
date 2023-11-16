@@ -1,7 +1,12 @@
 ## MAVLink連接和控制腳本
 ### 簡介
 這個腳本提供了一種方法，用於通過MAVLink協議同時與無人機（heli）和地面車輛（rover）建立通信連接。腳本中包含了建立連接、獲取GPS數據、設置家庭點以及一些基本的無人機控制指令。
+****
+### SITL環境建制
+可以參考下面文件，以完成Docker自動化建置，與mavlink多運行腳本。
+<https://github.com/Oliver0804/mavlink_tutorial/tree/main/docker_ubuntu18#readme>
 
+****
 ### 安裝指南
 
 要運行這個腳本，您需要安裝pymavlink庫。這可以通過以下命令完成：
@@ -45,6 +50,8 @@ python3 followRTL.py
 2. 與無人機和地面車輛建立UDP連接。
 3. 獲取和顯示GPS數據。
 4. 設置無人機和地面車輛的家庭點。
+
+****
 
 ### 注意事項
 
