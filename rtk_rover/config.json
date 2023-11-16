@@ -1,13 +1,13 @@
 {
-    "master": {
-        "type": "udp",
-        "address": "127.0.0.1",
-        "port": 14551
-    },
     "rover": {
         "type": "udp",
         "address": "127.0.0.1",
         "baudrate": 57600,
+        "port": 14551
+    },
+    "heli": {
+        "type": "udp",
+        "address": "127.0.0.1",
         "port": 14552
     }
 }

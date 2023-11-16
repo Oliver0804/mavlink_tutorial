@@ -4,58 +4,92 @@ import math
 import json
 import socket
 
-
-
 # Establish a connection with the aircraft
-#master = mavutil.mavlink_connection('udp:127.0.0.1:14551')
+#heli = mavutil.mavlink_connection('udp:127.0.0.1:14551')
 # Establish a connection with the Rover ground station
 #rover = mavutil.mavlink_connection('udp:127.0.0.1:14552')
 
-
-from pymavlink import mavutil
-import json
-import socket
-
-# Function to create a mavlink connection based on the type
 def create_connection(conn_params):
+    # 構造連接字符串並打印連接信息
+    conn_string = construct_conn_string(conn_params)
+    print(f"Establishing {conn_params['type']} connection on {conn_string}...")
+
+    # 嘗試建立連接
+    try:
+        return mavutil.mavlink_connection(conn_string)
+    except Exception as e:
+        handle_connection_error(e, conn_params)
+
+def construct_conn_string(conn_params):
+    # 根據連接類型構造連接字符串
     if conn_params['type'] == 'udp':
-        conn_string = f"udp:{conn_params['address']}:{conn_params['port']}"
+        return f"udp:{conn_params['address']}:{conn_params['port']}"
     elif conn_params['type'] == 'serial':
-        conn_string = f"{conn_params['address']}:{conn_params['baudrate']}"
+        return f"{conn_params['address']}:{conn_params['baudrate']}"
     else:
         raise ValueError(f"Unsupported connection type: {conn_params['type']}")
 
-    try:
-        return mavutil.mavlink_connection(conn_string)
-    except socket.gaierror as e:
-        print(f"Address resolution error for {conn_params['address']}: {e}")
-        raise
-    except socket.error as e:
-        if e.errno == socket.errno.EACCES:
+def handle_connection_error(error, conn_params):
+    # 特定錯誤處理
+    if isinstance(error, socket.gaierror):
+        print(f"Address resolution error for {conn_params['address']}: {error}")
+    elif isinstance(error, socket.error):
+        if error.errno == socket.errno.EACCES:
             print(f"Insufficient permissions to bind to port {conn_params['port']}.")
-        elif e.errno == socket.errno.EADDRINUSE:
+        elif error.errno == socket.errno.EADDRINUSE:
             print(f"Port {conn_params['port']} is already in use.")
         else:
-            print(f"Socket error: {e}")
-        raise
+            print(f"Socket error: {error}")
+    else:
+        print(f"Failed to establish connection: {error}")
+
+    raise error  # 重新拋出錯誤以允許上層處理
+
+def get_gps_data(vehicle):
+    gps_data = vehicle.recv_match(type='GPS_RAW_INT', blocking=True, timeout=10)
+
+    if gps_data:
+        print(gps_data)
+        fix_type = gps_data.fix_type
+        if fix_type == 3:
+            print("3D Fix")
+        elif fix_type == 6:
+            print("RTK Fixed")
+        else:
+            print(f"Other GPS Fix Type: {fix_type}")
+    else:
+        status_text = vehicle.recv_match(type='STATUS_TEXT', blocking=True, timeout=10)
+        if status_text:
+            if "RTK" in status_text.text:
+                print("RTK status detected from STATUS_TEXT!")
+            elif "3D Fix" in status_text.text:
+                print("3D Fix status detected from STATUS_TEXT!")
+        else:
+            print("No GPS data or status received.")
+
 
 # Load connection parameters from a JSON file
-with open('config.json', 'r') as f:
-    params = json.load(f)
+try:
+    print("Loading connection parameters...")
+    with open('config.json', 'r') as f:
+        params = json.load(f)
+except FileNotFoundError:
+    print("Config file not found. Exiting.")
 
 # Initialize the connections
-master = None
+heli = None
 rover = None
 
 try:
-    master = create_connection(params['master'])
+    print("Establishing connections...")
+    heli = create_connection(params['heli'])
     rover = create_connection(params['rover'])
 except Exception as e:
     print(f"Failed to establish connection: {e}")
     exit(1)  # Exit if we cannot establish a connection
 
-# Ensure that both master and rover are connected before proceeding
-if master is None or rover is None:
+# Ensure that both heli and rover are connected before proceeding
+if heli is None or rover is None:
     print("One or more connections could not be established. Exiting.")
     exit(1)
 
@@ -75,101 +109,71 @@ rover.mav.request_data_stream_send(rover.target_system, rover.target_component,
 # (If needed) Take off and switch to FOLLOW mode
 # Uncomment the following lines if required:
 """
-master.mav.command_long_send(
-    master.target_system, master.target_component,
+heli.mav.command_long_send(
+    heli.target_system, heli.target_component,
     mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0,
     0, 0, 0, 0, 0, 0, 10  # Take-off altitude set to 10m
 )
 time.sleep(1)  # Allow some time for take-off
 
 # Switch to FOLLOW mode
-master.set_mode(mavutil.mavlink.COPTER_MODE_FOLLOW)
+heli.set_mode(mavutil.mavlink.COPTER_MODE_FOLLOW)
 """
 
-initial_location = master.location()
+initial_location = heli.location()
 initial_lat = initial_location.lat
 initial_lon = initial_location.lng  
 
-radius = 5 # 大约等于100m
 
 
-angle = 0  # 初始化角度
 
-
-master.mav.param_set_send(
-    master.target_system, 
-    master.target_component, 
+heli.mav.param_set_send(
+    heli.target_system, 
+    heli.target_component, 
     b'FOLL_YAW_BEHAVE', 
     0,
     mavutil.mavlink.MAV_PARAM_TYPE_INT8
 )
 
-
+# 設置新的家庭點座標
+new_home_latitude = 47.3977415  # 緯度，以度為單位
+new_home_longitude = 8.5455934  # 經度，以度為單位
+new_home_altitude = 488.0       # 高度，以米為單位
 
 while True:
 
-    # Fetch the location of the rover to serve as the target location for the aircraft
     rover_location = rover.location()
-    target_lat = rover_location.lat
-    target_lon = rover_location.lng
-
-    #for testing
-    target_lat = initial_lat + radius * math.sin(math.radians(angle)) / 111319.9  # 111319.9 是地球上每度纬度的大约距离（以米为单位）
-    target_lon = initial_lon + radius * math.cos(math.radians(angle)) / 111319.9
-    angle += 3  # 增加角度，使目标沿圆圈移动
-    if angle >= 360:
-        angle = 0  # 重置角度
+    heli_location = heli.location()
 
     
-
-    gps_data = rover.recv_match(type='GPS_RAW_INT', blocking=True, timeout=10)
-    
-    if gps_data:
-        print(gps_data)
-        fix_type = gps_data.fix_type
-        if fix_type == 3:
-            print("3D Fix")
-        elif fix_type == 6:
-            print("RTK Fixed")
-        else:
-            print(f"Other GPS Fix Type: {fix_type}")
-    else:
-        status_text = rover.recv_match(type='STATUS_TEXT', blocking=True, timeout=10)
-        if status_text:
-            if "RTK" in status_text.text:
-                print("RTK status detected from STATUS_TEXT!")
-            elif "3D Fix" in status_text.text:
-                print("3D Fix status detected from STATUS_TEXT!")
-        else:
-            print("No GPS data or status received.")
+    get_gps_data(rover)
+    get_gps_data(heli)
 
     time_boot_ms = int(time.time() * 1000) % 4294967296
     
     print("Time Boot MS:", int(time.time() * 1000))
-    print("Target Lat:", int(target_lat * 1e7))
-    print("Target Lon:", int(target_lon * 1e7))
-    print("Alt:", 1000)
-    print("Relative Alt:", 0)
-    print("VX:", 0)
-    print("VY:", 0)
-    print("VZ:", 0)
-    print("HDG:", 0)
+    print("Rover Lat:", int(rover_location.lat * 1e6), "Heli Lat:", int(heli_location.lat * 1e6))
+    print("Rover lng:", int(rover_location.lng * 1e6), "Heli lng:", int(heli_location.lng * 1e6))
+    print("Rover alt:", int(rover_location.alt ),"m.", "Heli alt:", int(heli_location.alt ),"m.")
+
     # Set the fetched target location as the HOME point
-    print("Setting home point...")
-    master.mav.command_long_send(
-        master.target_system, master.target_component,
-        mavutil.mavlink.MAV_CMD_DO_SET_HOME, 0, 1, 0, 0, 0,
-        target_lat, target_lon, 0  # Altitude remains at 10m
+    print("Heli location to Rover Setting home point...")
+    heli.mav.command_long_send(
+        heli.target_system, heli.target_component,
+        mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+        0,            # 確認
+        0,            # 參數1，1=使用當前位置，0=使用指定的經緯度
+        0, 0, 0,      # 參數2, 3, 4 不使用
+        rover_location.lat, rover_location.lng, new_home_altitude
+    )
+    print("Rover location to Heli Setting home point...")
+    rover.mav.command_long_send(
+        rover.target_system, rover.target_component,
+        mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+        0,            # 確認
+        0,            # 參數1，1=使用當前位置，0=使用指定的經緯度
+        0, 0, 0,      # 參數2, 3, 4 不使用
+        heli_location.lat, heli_location.lng, new_home_altitude
     )
     
-    # Transmit the target location to the aircraft
-    print("Sending target location...")
-    master.mav.global_position_int_send(
-        time_boot_ms,                # Using the corrected value
-        int(target_lat * 1e7),      # Latitude
-        int(target_lon * 1e7),      # Longitude
-        1000,                       # Altitude (in centimeters)
-        0, 0, 0, 0, 0, 0            # Other parameters such as velocity and direction
-    )
-
     time.sleep(1)  # Update location information every second
