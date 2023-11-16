@@ -1,0 +1,14 @@
+version: '3'
+services:
+  rover-sitl4.4.2:
+    build: 
+      context: .  # 指定Dockerfile所在的目錄，這裡假設Dockerfile在當前目錄下
+    tty: true
+    ports:
+      - 5761:5760  # Rover 使用的端口
+  helicopter-sitl4.4.2:
+    build: 
+      context: .  # 同樣假設Helicopter的Dockerfile也在當前目錄下
+    tty: true
+    ports:
+      - 5762:5760  # Helicopter 使用的端口，不同於Rover
