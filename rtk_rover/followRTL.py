@@ -3,6 +3,92 @@ import time
 import math
 import json
 import socket
+import pygame
+import threading
+
+from pymavlink.dialects.v20 import common as mavlink2
+
+# 设置 RC 通道值
+rc1 = 1500  # 示例值
+rc2 = 1500  # 示例值
+rc3 = 1500  # 示例值
+rc4 = 1500  # 示例值
+
+def get_current_location(connection):
+    msg = connection.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
+    return msg.lat / 1E7, msg.lon / 1E7, msg.alt / 1E3  # returns lat, lon, alt
+
+
+
+
+def move_rc_channels_send(connection, SetRC1, SetRC2, SetRC3, SetRC4, wait_time):
+    # 设置 RC 通道值
+    rc1 = 1500  # 示例值
+    rc2 = 1500  # 示例值
+    rc3 = 1500  # 示例值
+    rc4 = 1500  # 示例值
+    msg = mavlink2.MAVLink_rc_channels_override_message(
+        target_system=connection.target_system,
+        target_component=connection.target_component,
+        chan1_raw=SetRC1,
+        chan2_raw=SetRC2,
+        chan3_raw=SetRC3,
+        chan4_raw=SetRC4,
+        chan5_raw=0,
+        chan6_raw=0,
+        chan7_raw=0,
+        chan8_raw=0
+    )
+    for x in range(0, wait_time):
+        connection.mav.send(msg)
+        print(".", end="")
+        time.sleep(0.1)
+    
+
+def keyboard_listener():
+    pygame.init()
+    screen = pygame.display.set_mode((400, 300))
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w:
+                    print("姿態前傾")
+                    move_rc_channels_send(heli, 1500, 1100, 1500, 1500, 10)
+
+                elif event.key == pygame.K_s:
+                    print("姿態往後")
+                    move_rc_channels_send(heli, 1500, 1900, 1500, 1500, 10)
+
+                elif event.key == pygame.K_a:
+                    print("姿態向左")
+                    move_rc_channels_send(heli, 1100, 1500, 1500, 1500, 10)
+
+                elif event.key == pygame.K_d:
+                    print("姿態向右")
+                    move_rc_channels_send(heli, 1900, 1500, 1500, 1500, 10)
+                elif event.key == pygame.K_q:
+                    print("YAW向右")
+                    move_rc_channels_send(heli, 1500, 1500, 1500, 1100, 10)
+                elif event.key == pygame.K_e:
+                    print("YAW向右")
+                    move_rc_channels_send(heli, 1500, 1500, 1500, 1900, 10)
+                elif event.key == pygame.K_k:
+                    print("上升")
+                    move_rc_channels_send(heli, 1500, 1500, 1900, 1500, 10)
+                elif event.key == pygame.K_j:
+                    print("下降")
+                    move_rc_channels_send(heli, 1500, 1500, 1100, 1500, 10)
+                    
+    pygame.quit()
+
+# 创建并启动键盘监听线程
+keyboard_thread = threading.Thread(target=keyboard_listener)
+keyboard_thread.start()
+
+#
 
 # Establish a connection with the aircraft
 #heli = mavutil.mavlink_connection('udp:127.0.0.1:14551')
@@ -151,13 +237,13 @@ while True:
 
     time_boot_ms = int(time.time() * 1000) % 4294967296
     
-    print("Time Boot MS:", int(time.time() * 1000))
-    print("Rover Lat:", int(rover_location.lat * 1e6), "Heli Lat:", int(heli_location.lat * 1e6))
-    print("Rover lng:", int(rover_location.lng * 1e6), "Heli lng:", int(heli_location.lng * 1e6))
-    print("Rover alt:", int(rover_location.alt ),"m.", "Heli alt:", int(heli_location.alt ),"m.")
+    #print("Time Boot MS:", int(time.time() * 1000))
+    #print("Rover Lat:", int(rover_location.lat * 1e6), "Heli Lat:", int(heli_location.lat * 1e6))
+    #print("Rover lng:", int(rover_location.lng * 1e6), "Heli lng:", int(heli_location.lng * 1e6))
+    #print("Rover alt:", int(rover_location.alt ),"m.", "Heli alt:", int(heli_location.alt ),"m.")
 
     # Set the fetched target location as the HOME point
-    print("Heli location to Rover Setting home point...")
+    #print("Heli location to Rover Setting home point...")
     heli.mav.command_long_send(
         heli.target_system, heli.target_component,
         mavutil.mavlink.MAV_CMD_DO_SET_HOME,
@@ -166,7 +252,7 @@ while True:
         0, 0, 0,      # 參數2, 3, 4 不使用
         rover_location.lat, rover_location.lng, new_home_altitude
     )
-    print("Rover location to Heli Setting home point...")
+    #print("Rover location to Heli Setting home point...")
     rover.mav.command_long_send(
         rover.target_system, rover.target_component,
         mavutil.mavlink.MAV_CMD_DO_SET_HOME,
@@ -177,3 +263,6 @@ while True:
     )
     
     time.sleep(1)  # Update location information every second
+
+
+keyboard_thread.join()
