@@ -42,7 +42,7 @@ def move_rc_channels_send(connection, SetRC1, SetRC2, SetRC3, SetRC4, wait_time)
     for x in range(0, wait_time):
         connection.mav.send(msg)
         print(".", end="")
-        time.sleep(0.1)
+        time.sleep(0.05)
     
 
 def keyboard_listener():
@@ -56,31 +56,31 @@ def keyboard_listener():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     print("姿態前傾")
-                    move_rc_channels_send(heli, 1500, 1100, 1500, 1500, 10)
+                    move_rc_channels_send(heli, 1500, 1100, 1500, 1500, 5)
 
                 elif event.key == pygame.K_s:
                     print("姿態往後")
-                    move_rc_channels_send(heli, 1500, 1900, 1500, 1500, 10)
+                    move_rc_channels_send(heli, 1500, 1900, 1500, 1500, 5)
 
                 elif event.key == pygame.K_a:
                     print("姿態向左")
-                    move_rc_channels_send(heli, 1100, 1500, 1500, 1500, 10)
+                    move_rc_channels_send(heli, 1100, 1500, 1500, 1500, 5)
 
                 elif event.key == pygame.K_d:
                     print("姿態向右")
-                    move_rc_channels_send(heli, 1900, 1500, 1500, 1500, 10)
+                    move_rc_channels_send(heli, 1900, 1500, 1500, 1500, 5)
                 elif event.key == pygame.K_q:
                     print("YAW向右")
-                    move_rc_channels_send(heli, 1500, 1500, 1500, 1100, 10)
+                    move_rc_channels_send(heli, 1500, 1500, 1500, 1100, 5)
                 elif event.key == pygame.K_e:
                     print("YAW向右")
-                    move_rc_channels_send(heli, 1500, 1500, 1500, 1900, 10)
+                    move_rc_channels_send(heli, 1500, 1500, 1500, 1900, 5)
                 elif event.key == pygame.K_k:
                     print("上升")
-                    move_rc_channels_send(heli, 1500, 1500, 1900, 1500, 10)
+                    move_rc_channels_send(heli, 1500, 1500, 1900, 1500, 5)
                 elif event.key == pygame.K_j:
                     print("下降")
-                    move_rc_channels_send(heli, 1500, 1500, 1100, 1500, 10)
+                    move_rc_channels_send(heli, 1500, 1500, 1100, 1500, 5)
                     
     pygame.quit()
 
