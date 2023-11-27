@@ -1,2 +1,2 @@
 # mavlink_tutorial
-test
+移除不必要的tlog

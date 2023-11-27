@@ -71,6 +71,7 @@ RUN ./waf distclean && \
     ./waf configure --board sitl && \
     ./waf copter && \
     ./waf rover && \
+    ./waf heli && \
     ./waf plane && \
     ./waf sub  # 組合指令以減少層數
 
@@ -81,7 +82,7 @@ EXPOSE 5760/tcp
 ENV INSTANCE 0
 ENV LAT 25.0330
 ENV LON 121.5654
-ENV ALT 0
+ENV ALT 487 # Taipei 101
 ENV DIR 270
 ENV MODEL +
 ENV SPEEDUP 1
