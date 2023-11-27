@@ -61,7 +61,7 @@ def arm_throttle(vehicle):
         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
         0, 1, 0, 0, 0, 0, 0, 0  # Command to arm
     )
-    vehicle.motors_armed_wait()  # Wait until the motors are armed
+    #vehicle.motors_armed_wait()  # Wait until the motors are armed
     print("Motors armed")
 
 def takeoff(vehicle, alt):
@@ -182,13 +182,15 @@ def create_connection(conn_params):
         handle_connection_error(e, conn_params)
 
 def construct_conn_string(conn_params):
-    # 根據連接類型構造連接字符串
+    # 根据连接类型构造连接字符串
     if conn_params['type'] == 'udp':
         return f"udp:{conn_params['address']}:{conn_params['port']}"
     elif conn_params['type'] == 'serial':
-        return f"{conn_params['address']}:{conn_params['baudrate']}"
+        # 确保串行连接字符串格式为 "串口地址,波特率"
+        return f"{conn_params['address']},{conn_params['baudrate']}"
     else:
         raise ValueError(f"Unsupported connection type: {conn_params['type']}")
+
 
 def handle_connection_error(error, conn_params):
     # 特定錯誤處理
@@ -309,12 +311,22 @@ while True:
     
     get_gps_data(rover)
     get_gps_data(heli)
+
+    # 接收并打印心跳包
+    heli_heartbeat = heli.recv_match(type='HEARTBEAT', blocking=False)
+    rover_heartbeat = rover.recv_match(type='HEARTBEAT', blocking=False)
+
+    if heli_heartbeat:
+        print("Heli Heartbeat:", heli_heartbeat)
+    if rover_heartbeat:
+        print("Rover Heartbeat:", rover_heartbeat)
+
     time_boot_ms = int(time.time() * 1000) % 4294967296
     
-    #print("Time Boot MS:", int(time.time() * 1000))
-    #print("Rover Lat:", int(rover_location.lat * 1e6), "Heli Lat:", int(heli_location.lat * 1e6))
-    #print("Rover lng:", int(rover_location.lng * 1e6), "Heli lng:", int(heli_location.lng * 1e6))
-    #print("Rover alt:", int(rover_location.alt ),"m.", "Heli alt:", int(heli_location.alt ),"m.")
+    print("Time Boot MS:", int(time.time() * 1000))
+    print("Rover Lat:", int(rover_location.lat * 1e6), "Heli Lat:", int(heli_location.lat * 1e6))
+    print("Rover lng:", int(rover_location.lng * 1e6), "Heli lng:", int(heli_location.lng * 1e6))
+    print("Rover alt:", int(rover_location.alt ),"m.", "Heli alt:", int(heli_location.alt ),"m.")
 
     # Set the fetched target location as the HOME point
     #print("Heli location to Rover Setting home point...")

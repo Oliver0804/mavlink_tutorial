@@ -38,6 +38,11 @@ pip install pymavlink
 ```
 請根據您的設備配置調整這些參數。
 
+運行本地數傳模塊
+```
+mavproxy.py --master=/dev/ttyACM1 --baudrate=115200 --out=udp:127.0.0.1:14577 --map --console
+```
+
 ### 使用方法
 
 確保您的無人機和地面車輛已經開機並且可以通過MAVLink連接。

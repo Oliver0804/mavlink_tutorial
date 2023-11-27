@@ -1,13 +1,19 @@
 {
+    "heli": {
+        "type": "udp",
+        "address": "127.0.0.1",
+        "baudrate": 57600,
+        "port": 14577
+    },
     "rover": {
         "type": "udp",
         "address": "127.0.0.1",
         "baudrate": 57600,
         "port": 14551
     },
-    "heli": {
+    "heli1": {
         "type": "udp",
         "address": "127.0.0.1",
-        "port": 14552
+        "port": 14561
     }
 }
