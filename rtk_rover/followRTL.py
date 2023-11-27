@@ -19,6 +19,66 @@ def get_current_location(connection):
     return msg.lat / 1E7, msg.lon / 1E7, msg.alt / 1E3  # returns lat, lon, alt
 
 
+def switch_to_rtl(vehicle):
+    """
+    Switch the given vehicle to RTL mode.
+
+    :param vehicle: The vehicle to switch mode.
+    """
+    vehicle.set_mode(mavutil.mavlink.COPTER_MODE_RTL)
+    print("Switched to RTL mode.")
+
+
+def switch_to_loiter(vehicle):
+    """
+    Switch the given vehicle to Loiter mode.
+
+    :param vehicle: The vehicle to switch mode.
+    """
+    vehicle.set_mode(mavutil.mavlink.COPTER_MODE_LOITER)
+    print("Switched to Loiter mode.")
+
+
+def switch_to_guided(vehicle):
+    """
+    Switch the given vehicle to Guided mode.
+
+    :param vehicle: The vehicle to switch mode.
+    """
+    vehicle.set_mode(mavutil.mavlink.COPTER_MODE_GUIDED)
+    print("Switched to Guided mode.")
+
+def arm_throttle(vehicle):
+    """
+    Arms the vehicle and enables the throttle.
+
+    :param vehicle: The vehicle to arm.
+    """
+    print("Arming motors")
+    vehicle.mav.command_long_send(
+        vehicle.target_system, 
+        vehicle.target_component,
+        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+        0, 1, 0, 0, 0, 0, 0, 0  # Command to arm
+    )
+    vehicle.motors_armed_wait()  # Wait until the motors are armed
+    print("Motors armed")
+
+def takeoff(vehicle, alt):
+    """
+    Commands the vehicle to take off and ascend to the specified altitude.
+
+    :param vehicle: The vehicle to command.
+    :param alt: The altitude to ascend to (in meters).
+    """
+    print(f"Taking off to {alt} meters")
+    vehicle.mav.command_long_send(
+        vehicle.target_system, 
+        vehicle.target_component,
+        mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 
+        0, 0, 0, 0, 0, 0, 0, alt  # Altitude to take off to
+    )
+    print(f"Vehicle is ascending to {alt} meters")
 
 
 def move_rc_channels_send(connection, SetRC1, SetRC2, SetRC3, SetRC4, wait_time):
@@ -56,31 +116,46 @@ def keyboard_listener():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     print("姿態前傾")
-                    move_rc_channels_send(heli, 1500, 1100, 1500, 1500, 5)
+                    move_rc_channels_send(heli, 1500, 1100, 1500, 1500, 2)
 
                 elif event.key == pygame.K_s:
                     print("姿態往後")
-                    move_rc_channels_send(heli, 1500, 1900, 1500, 1500, 5)
+                    move_rc_channels_send(heli, 1500, 1900, 1500, 1500, 2)
 
                 elif event.key == pygame.K_a:
                     print("姿態向左")
-                    move_rc_channels_send(heli, 1100, 1500, 1500, 1500, 5)
+                    move_rc_channels_send(heli, 1100, 1500, 1500, 1500, 2)
 
                 elif event.key == pygame.K_d:
                     print("姿態向右")
-                    move_rc_channels_send(heli, 1900, 1500, 1500, 1500, 5)
+                    move_rc_channels_send(heli, 1900, 1500, 1500, 1500, 2)
                 elif event.key == pygame.K_q:
                     print("YAW向右")
-                    move_rc_channels_send(heli, 1500, 1500, 1500, 1100, 5)
+                    move_rc_channels_send(heli, 1500, 1500, 1500, 1450, 1)
                 elif event.key == pygame.K_e:
                     print("YAW向右")
-                    move_rc_channels_send(heli, 1500, 1500, 1500, 1900, 5)
+                    move_rc_channels_send(heli, 1500, 1500, 1500, 1550, 1)
                 elif event.key == pygame.K_k:
                     print("上升")
-                    move_rc_channels_send(heli, 1500, 1500, 1900, 1500, 5)
+                    move_rc_channels_send(heli, 1500, 1500, 1900, 1500, 2)
                 elif event.key == pygame.K_j:
                     print("下降")
-                    move_rc_channels_send(heli, 1500, 1500, 1100, 1500, 5)
+                    move_rc_channels_send(heli, 1500, 1500, 1100, 1500, 2)
+                elif event.key == pygame.K_r:
+                    print("RTL")
+                    switch_to_rtl(heli)
+                elif event.key == pygame.K_l:
+                    print("Loiter")
+                    switch_to_loiter(heli)
+                elif event.key == pygame.K_g:
+                    print("Guided")
+                    switch_to_guided(heli)
+                elif event.key == pygame.K_u:#unlocked
+                    print("arm throttle")
+                    arm_throttle(heli)
+                elif event.key == pygame.K_t:
+                    print("takeoff")
+                    takeoff(heli, 10)
                     
     pygame.quit()
 
@@ -234,7 +309,6 @@ while True:
     
     get_gps_data(rover)
     get_gps_data(heli)
-
     time_boot_ms = int(time.time() * 1000) % 4294967296
     
     #print("Time Boot MS:", int(time.time() * 1000))
