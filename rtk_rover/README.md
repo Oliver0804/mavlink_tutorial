@@ -9,6 +9,16 @@
 可以參考下面文件，以完成Docker自動化建置，與mavlink多運行腳本。
 <https://github.com/Oliver0804/mavlink_tutorial/tree/main/docker_ubuntu18#readme>
 
+
+****
+### MavProxy 安裝
+可以參考下面文件，進行mavproxry安裝
+<https://ardupilot.org/mavproxy/docs/getting_started/download_and_installation.html>
+
+windows用戶
+<https://firmware.ardupilot.org/Tools/MAVProxy/>
+
+
 ****
 ### 安裝指南
 
