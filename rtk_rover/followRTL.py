@@ -81,6 +81,74 @@ def takeoff(vehicle, alt):
     print(f"Vehicle is ascending to {alt} meters")
 
 
+def get_current_yaw(vehicle):
+    """
+    获取飞行器的当前 YAW 角度。
+
+    :param vehicle: 连接到飞行器的 MAVLink 连接实例。
+    :return: YAW 角度（以弧度为单位）。
+    """
+    attitude = vehicle.recv_match(type='ATTITUDE', blocking=True)
+    if attitude:
+        print("Yaw:", attitude.yaw)
+        return attitude.yaw
+    else:
+        return None
+
+
+import math
+
+def calculate_new_coordinates(lat, lon, yaw, distance):
+    """
+    根据给定的坐标、YAW 角度和距离计算新的坐标点，结果限制在小数点后七位。
+
+    :param lat: 起始点纬度（以度为单位）。
+    :param lon: 起始点经度（以度为单位）。
+    :param yaw: YAW 角度（以弧度为单位）。
+    :param distance: 距离（以米为单位）。
+    :return: 新的坐标点（纬度、经度），小数点后七位。
+    """
+    # 将纬度和经度转换为弧度
+    lat_rad = math.radians(lat)
+    lon_rad = math.radians(lon)
+
+    R = 6371000  # 地球半径，单位：米
+    delta = distance / R  # 角距离
+
+    # 计算新的纬度和经度（以弧度为单位）
+    new_lat_rad = math.asin(math.sin(lat_rad) * math.cos(delta) + 
+                            math.cos(lat_rad) * math.sin(delta) * math.cos(yaw))
+    new_lon_rad = lon_rad + math.atan2(math.sin(yaw) * math.sin(delta) * math.cos(lat_rad),
+                                       math.cos(delta) - math.sin(lat_rad) * math.sin(new_lat_rad))
+
+    # 转换回角度并四舍五入到小数点后七位
+    new_lat = round(math.degrees(new_lat_rad), 7)
+    new_lon = round(math.degrees(new_lon_rad), 7)
+
+    return new_lat, new_lon
+
+
+def set_home_position(vehicle, lat, lon, alt):
+    """
+    设置无人机的 Home 位置。
+
+    :param vehicle: 连接到无人机的 MAVLink 连接实例。
+    :param lat: Home 位置的纬度。
+    :param lon: Home 位置的经度。
+    :param alt: Home 位置的高度（单位：米）。
+    """
+    # 使用 MAVLink 命令设置 Home 位置
+    vehicle.mav.command_long_send(
+        vehicle.target_system, vehicle.target_component,
+        mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+        0,  # Confirmation
+        0,  # Param 1: 0 to use specified lat/lon/alt
+        0, 0, 0,  # Params 2-4 (unused)
+        lat, lon, alt  # Params 5-7: Latitude, Longitude, Altitude
+    )
+    print(f"Setting new home position to{vehicle}: Latitude = {lat}, Longitude = {lon}, Altitude = {alt}")
+
+
 def move_rc_channels_send(connection, SetRC1, SetRC2, SetRC3, SetRC4, wait_time):
     # 设置 RC 通道值
     rc1 = 1500  # 示例值
@@ -299,27 +367,32 @@ heli.mav.param_set_send(
 )
 
 # 設置新的家庭點座標
-new_home_latitude = 47.3977415  # 緯度，以度為單位
-new_home_longitude = 8.5455934  # 經度，以度為單位
-new_home_altitude = 488.0       # 高度，以米為單位
+#  
+new_home_latitude = 25.03338490  # 緯度，以度為單位
+new_home_longitude = 121.56551376  # 經度，以度為單位
+new_home_altitude = 0.0       # 高度，以米為單位
 
 while True:
 
     rover_location = rover.location()
     heli_location = heli.location()
 
-    
-    get_gps_data(rover)
     get_gps_data(heli)
+    get_gps_data(rover)
+   
 
     # 接收并打印心跳包
-    heli_heartbeat = heli.recv_match(type='HEARTBEAT', blocking=False)
-    rover_heartbeat = rover.recv_match(type='HEARTBEAT', blocking=False)
+    #heli_heartbeat = heli.recv_match(type='HEARTBEAT', blocking=False)
+    #rover_heartbeat = rover.recv_match(type='HEARTBEAT', blocking=False)
+    #if heli_heartbeat:
+        #print("Heli Heartbeat:", heli_heartbeat)
+    #if rover_heartbeat:
+        #print("Rover Heartbeat:", rover_heartbeat)
 
-    if heli_heartbeat:
-        print("Heli Heartbeat:", heli_heartbeat)
-    if rover_heartbeat:
-        print("Rover Heartbeat:", rover_heartbeat)
+    
+    #print("Heli location:", heli_location.lat, heli_location.lng,get_current_yaw(heli))
+    rover_cal_yaw_lat,rover_cal_yaw_lng=calculate_new_coordinates(heli_location.lat, heli_location.lng,get_current_yaw(heli), 25)
+    heli_cal_yaw_lat,heli_cal_yaw_lng=calculate_new_coordinates(rover_location.lat, rover_location.lng,get_current_yaw(rover), 25)
 
     time_boot_ms = int(time.time() * 1000) % 4294967296
     
@@ -330,23 +403,20 @@ while True:
 
     # Set the fetched target location as the HOME point
     #print("Heli location to Rover Setting home point...")
-    heli.mav.command_long_send(
-        heli.target_system, heli.target_component,
-        mavutil.mavlink.MAV_CMD_DO_SET_HOME,
-        0,            # 確認
-        0,            # 參數1，1=使用當前位置，0=使用指定的經緯度
-        0, 0, 0,      # 參數2, 3, 4 不使用
-        rover_location.lat, rover_location.lng, new_home_altitude
-    )
+    #set_home_position(heli, cal_yaw_lat, cal_yaw_lng, rover_location.alt)
+
+    set_home_position(rover,rover_cal_yaw_lat, rover_cal_yaw_lng, 0)
+    set_home_position(heli,heli_cal_yaw_lat, heli_cal_yaw_lng, 0)
+
     #print("Rover location to Heli Setting home point...")
-    rover.mav.command_long_send(
-        rover.target_system, rover.target_component,
-        mavutil.mavlink.MAV_CMD_DO_SET_HOME,
-        0,            # 確認
-        0,            # 參數1，1=使用當前位置，0=使用指定的經緯度
-        0, 0, 0,      # 參數2, 3, 4 不使用
-        heli_location.lat, heli_location.lng, new_home_altitude
-    )
+    #rover.mav.command_long_send(
+    #    rover.target_system, rover.target_component,
+    #    mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+    #    0,            # 確認
+    #    1,            # 參數1，1=使用當前位置，0=使用指定的經緯度
+    #    0, 0, 0,      # 參數2, 3, 4 不使用
+    #    heli_location.lat, heli_location.lng, new_home_altitude
+    #)
     
     time.sleep(1)  # Update location information every second
 
