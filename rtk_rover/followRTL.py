@@ -176,6 +176,8 @@ def move_rc_channels_send(connection, SetRC1, SetRC2, SetRC3, SetRC4, wait_time)
 def keyboard_listener():
     pygame.init()
     screen = pygame.display.set_mode((400, 300))
+    pygame.display.set_caption("Follow RTL")
+
     running = True
     while running:
         for event in pygame.event.get():
