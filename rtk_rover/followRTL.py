@@ -358,8 +358,6 @@ initial_lat = initial_location.lat
 initial_lon = initial_location.lng  
 
 
-
-
 heli.mav.param_set_send(
     heli.target_system, 
     heli.target_component, 
@@ -375,10 +373,11 @@ new_home_longitude = 121.56551376  # 經度，以度為單位
 new_home_altitude = 0.0       # 高度，以米為單位
 
 while True:
-
+    # Get the current location of the heli and rover
     rover_location = rover.location()
     heli_location = heli.location()
 
+    # Print the current location of the heli and rover
     get_gps_data(heli)
     get_gps_data(rover)
    
@@ -404,21 +403,13 @@ while True:
     print("Rover alt:", int(rover_location.alt ),"m.", "Heli alt:", int(heli_location.alt ),"m.")
 
     # Set the fetched target location as the HOME point
+    
     #print("Heli location to Rover Setting home point...")
-    #set_home_position(heli, cal_yaw_lat, cal_yaw_lng, rover_location.alt)
-
     set_home_position(rover,rover_cal_yaw_lat, rover_cal_yaw_lng, 0)
+    #print("Rover location to Heli Setting home point...")
     set_home_position(heli,heli_cal_yaw_lat, heli_cal_yaw_lng, 0)
 
-    #print("Rover location to Heli Setting home point...")
-    #rover.mav.command_long_send(
-    #    rover.target_system, rover.target_component,
-    #    mavutil.mavlink.MAV_CMD_DO_SET_HOME,
-    #    0,            # 確認
-    #    1,            # 參數1，1=使用當前位置，0=使用指定的經緯度
-    #    0, 0, 0,      # 參數2, 3, 4 不使用
-    #    heli_location.lat, heli_location.lng, new_home_altitude
-    #)
+
     
     time.sleep(1)  # Update location information every second
 
