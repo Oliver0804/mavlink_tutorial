@@ -200,7 +200,7 @@ def keyboard_listener():
                     print("姿態向右")
                     move_rc_channels_send(heli, 1900, 1500, 1500, 1500, 2)
                 elif event.key == pygame.K_q:
-                    print("YAW向右")
+                    print("YAW向左")
                     move_rc_channels_send(heli, 1500, 1500, 1500, 1450, 1)
                 elif event.key == pygame.K_e:
                     print("YAW向右")
